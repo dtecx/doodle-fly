@@ -1,0 +1,57 @@
+# Packs the FlyWire connectome, builds the site and publishes it on GitHub Pages.
+# Enable once: Settings -> Pages -> Source: GitHub Actions.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Cache the raw FlyWire download (~135 MB)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/doodle-fly
+          key: flywire-v783-${{ hashFiles('scripts/build_data.py') }}
+          restore-keys: flywire-v783-
+
+      - name: Pack the connectome
+        run: uv run scripts/build_data.py
+
+      - run: npm ci
+      - run: npm run build
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
