@@ -1,18 +1,33 @@
 {
   "name": "doodle-fly",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
-  "description": "Doodle-Jump-style game played by the FlyWire fruit-fly connectome (whole-brain LIF model).",
+  "description": "A fruit fly's whole brain (FlyWire v783 connectome, 138,639 LIF neurons) plays a Doodle-Jump-style game in the browser.",
+  "license": "MIT",
+  "author": "dtecx",
+  "keywords": [
+    "connectome",
+    "flywire",
+    "drosophila",
+    "fruit-fly",
+    "spiking-neural-network",
+    "leaky-integrate-and-fire",
+    "neuroscience",
+    "threejs",
+    "game"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "data": "uv run scripts/build_data.py",
+    "play": "node scripts/play.ts",
     "probe": "node scripts/probe.ts",
     "survey": "node scripts/survey.ts",
-    "readout": "node scripts/readout.ts"
+    "readout": "node scripts/readout.ts",
+    "capture": "node scripts/capture.ts"
   },
   "dependencies": {
     "three": "^0.186.1"
