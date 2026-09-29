@@ -79,8 +79,9 @@ export class LIFEngine {
   private readonly slots: Int32Array[];
   private readonly slotLen: Int32Array;
 
-  /** spikes emitted since the last `drainSpikes` */
+  /** spikes emitted since the last `drainSpikes`/`takeSpikes`, with the step they happened in */
   spikes = new Int32Array(1 << 16);
+  spikeSteps = new Int32Array(1 << 16);
   nSpikes = 0;
   /** per-neuron group id for fast readout counts (-1 = none) */
   readonly groupOf: Int16Array;
@@ -234,6 +235,13 @@ export class LIFEngine {
     return out;
   }
 
+  takeSpikes(): { ids: Int32Array; steps: Int32Array } {
+    const ids = this.spikes.slice(0, this.nSpikes);
+    const steps = this.spikeSteps.slice(0, this.nSpikes);
+    this.nSpikes = 0;
+    return { ids, steps };
+  }
+
   /** bring a lazy neuron up to the current step and mark it hot */
   private makeHot(i: number): void {
     if (this.hot[i]) return;
@@ -371,7 +379,11 @@ export class LIFEngine {
               const grown = new Int32Array(this.spikes.length * 2);
               grown.set(this.spikes);
               this.spikes = grown;
+              const grownSteps = new Int32Array(this.spikes.length);
+              grownSteps.set(this.spikeSteps);
+              this.spikeSteps = grownSteps;
             }
+            this.spikeSteps[this.nSpikes] = t;
             this.spikes[this.nSpikes++] = i;
             const gid = groupOf[i];
             if (gid >= 0) groupCounts[gid]++;

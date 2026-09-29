@@ -4,3 +4,6 @@ dist/
 public/data/brain/
 .DS_Store
 *.log
+
+# local tooling
+.claude/
