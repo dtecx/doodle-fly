@@ -28,6 +28,9 @@ jobs:
           cache: npm
 
       - uses: astral-sh/setup-uv@v10.2.0
+        with:
+          # dependencies are declared inline (PEP 723) in the script itself
+          cache-dependency-glob: scripts/build_data.py
 
       - name: Cache the raw FlyWire download (~135 MB)
         uses: actions/cache@v6
