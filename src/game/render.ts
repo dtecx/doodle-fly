@@ -20,6 +20,7 @@ export interface RenderExtras {
   /** giant fibre activity, 0..1 */
   startle: number;
   showTarget: boolean;
+  paused: boolean;
 }
 
 function rand(seed: number, k: number): number {
@@ -38,6 +39,7 @@ export class GameRenderer {
   x0 = 0;
   private wingPhase = 0;
   private legs = 1;
+  private paused = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -59,6 +61,7 @@ export class GameRenderer {
   }
 
   draw(game: DoodleGame, dt: number, extras: RenderExtras): void {
+    this.paused = extras.paused;
     const { ctx } = this;
     const s = this.scale;
     const top = game.cameraY + game.H;
@@ -101,13 +104,19 @@ export class GameRenderer {
       ctx.beginPath();
       ctx.ellipse(sx(t.x), sy(t.y) + (PLATFORM_H * s) / 2, (t.w / 2 + 12) * s, (PLATFORM_H + 12) * s * 0.7, 0, 0, Math.PI * 2);
       ctx.stroke();
-      const fx = game.fly.x;
-      const fy = game.fly.y + 36;
-      const tx = fx + game.sense.dx;
-      ctx.beginPath();
-      ctx.moveTo(sx(fx), sy(fy));
-      ctx.quadraticCurveTo(sx((fx + tx) / 2), sy(Math.max(fy, t.y) + 40), sx(tx), sy(t.y + 20));
-      ctx.stroke();
+      // sight line from the eye to the target (drawn only when it doesn't wrap around the edge)
+      const fx = game.fly.x + 20 * game.fly.facing;
+      const fy = game.fly.y + 34;
+      const tx = game.fly.x + game.sense.dx;
+      if (tx > 0 && tx < game.W) {
+        ctx.setLineDash([2, 7]);
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = "rgba(217, 72, 15, 0.35)";
+        ctx.beginPath();
+        ctx.moveTo(sx(fx), sy(fy));
+        ctx.lineTo(sx(tx), sy(t.y + PLATFORM_H * 0.5));
+        ctx.stroke();
+      }
       ctx.restore();
     }
 
@@ -362,8 +371,18 @@ export class GameRenderer {
     ctx.fillText(String(game.score), 18, HUD_H / 2 + 2);
     ctx.textAlign = "right";
     ctx.font = `17px Pangolin, "Comic Sans MS", cursive`;
-    ctx.fillText(`best ${Math.max(game.best, game.score)}   ·   game #${game.games + 1}`, w - 16, HUD_H / 2 + 1);
+    ctx.fillText(`best ${Math.max(game.best, game.score)}   ·   game #${game.games + 1}`, w - 64, HUD_H / 2 + 1);
 
+    if (this.paused) {
+      ctx.fillStyle = "rgba(251, 246, 232, 0.55)";
+      ctx.fillRect(0, HUD_H + 4, w, this.cssH - HUD_H - 4);
+      ctx.textAlign = "center";
+      ctx.fillStyle = INK;
+      ctx.font = `44px Pangolin, "Comic Sans MS", cursive`;
+      ctx.fillText("paused", w / 2, this.cssH * 0.45);
+      ctx.font = `19px Pangolin, "Comic Sans MS", cursive`;
+      ctx.fillText("press space to let the fly play", w / 2, this.cssH * 0.45 + 40);
+    }
     if (!game.fly.alive) {
       const a = Math.min(1, game.fly.deadT * 2);
       ctx.globalAlpha = a;

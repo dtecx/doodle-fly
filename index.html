@@ -20,6 +20,17 @@
     <main id="app">
       <section id="game-pane" aria-label="Game">
         <canvas id="game"></canvas>
+        <button id="mute-btn" class="mute" type="button" aria-label="Toggle sound" aria-pressed="false">
+          <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" />
+            <path class="wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+          </svg>
+          <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" />
+            <path class="wave" d="M16 9.5l5 5M21 9.5l-5 5" />
+          </svg>
+        </button>
+        <div id="sound-hint" hidden>click anywhere for sound</div>
       </section>
 
       <section id="right">
