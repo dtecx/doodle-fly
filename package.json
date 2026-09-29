@@ -1,0 +1,29 @@
+{
+  "name": "doodle-fly",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Doodle-Jump-style game played by the FlyWire fruit-fly connectome (whole-brain LIF model).",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "data": "uv run scripts/build_data.py",
+    "probe": "node scripts/probe.ts",
+    "survey": "node scripts/survey.ts",
+    "readout": "node scripts/readout.ts"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/three": "^0.186.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  },
+  "engines": {
+    "node": ">=22.18"
+  }
+}
