@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { FlyModel } from "./fly.ts";
-import { arrowTexture, backdropTexture } from "./textures.ts";
+import { backdropTexture } from "./textures.ts";
 
 export interface ArcadeState {
   /** decoded steering, -1 (left) .. 1 (right) */
@@ -16,10 +16,44 @@ export interface ArcadeState {
 }
 
 const PRESS_ON = 0.1;
-const BUTTON_X = 0.6;
-const BUTTON_Z = -1.3;
+const BUTTON_X = 0.9;
+const BUTTON_Z = -1.2;
 const CAP_TOP = 0.27;
 const TRAVEL = 0.08;
+
+/** Solid rounded triangle pointing +x, lying flat and raised a little (no decal to z-fight with the cap). */
+function arrowGeometry(): THREE.ExtrudeGeometry {
+  const pts: [number, number][] = [
+    [0.125, 0],
+    [-0.075, 0.118],
+    [-0.075, -0.118],
+  ];
+  const r = 0.03;
+  const toward = (a: [number, number], b: [number, number], d: number): [number, number] => {
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    return [a[0] + ((b[0] - a[0]) * d) / len, a[1] + ((b[1] - a[1]) * d) / len];
+  };
+  const shape = new THREE.Shape();
+  pts.forEach((p, i) => {
+    const a = toward(p, pts[(i + 2) % 3], r);
+    const b = toward(p, pts[(i + 1) % 3], r);
+    if (i === 0) shape.moveTo(a[0], a[1]);
+    else shape.lineTo(a[0], a[1]);
+    shape.quadraticCurveTo(p[0], p[1], b[0], b[1]);
+  });
+  shape.closePath();
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: 0.016,
+    bevelEnabled: true,
+    bevelThickness: 0.008,
+    bevelSize: 0.01,
+    bevelSegments: 3,
+    curveSegments: 8,
+  });
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(-(pts[0][0] + pts[1][0] + pts[2][0]) / 3, 0, 0);
+  return geo;
+}
 
 class ArcadeButton {
   readonly group = new THREE.Group();
@@ -27,6 +61,7 @@ class ArcadeButton {
   private readonly capMat: THREE.MeshStandardMaterial;
   private readonly light: THREE.PointLight;
   private readonly ring: THREE.MeshStandardMaterial;
+  private readonly arrowMat: THREE.MeshStandardMaterial;
   depth = 0;
 
   constructor(x: number, dir: -1 | 1, color: string) {
@@ -52,13 +87,12 @@ class ArcadeButton {
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.28, 0.16, 40), this.capMat);
     body.position.y = 0.1;
     body.castShadow = true;
-    const top = new THREE.Mesh(
-      new THREE.CircleGeometry(0.27, 40),
-      new THREE.MeshStandardMaterial({ map: arrowTexture(dir, color), roughness: 0.3, emissive: "#ffffff", emissiveMap: arrowTexture(dir, color), emissiveIntensity: 0.2 }),
-    );
-    top.rotation.x = -Math.PI / 2;
-    top.position.y = 0.181;
-    this.cap.add(body, top);
+    this.arrowMat = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.35, emissive: "#ffffff", emissiveIntensity: 0.25 });
+    const arrow = new THREE.Mesh(arrowGeometry(), this.arrowMat);
+    arrow.position.y = 0.18;
+    arrow.rotation.y = dir < 0 ? Math.PI : 0;
+    arrow.castShadow = true;
+    this.cap.add(body, arrow);
     this.cap.position.y = CAP_TOP - 0.181;
     this.light = new THREE.PointLight(color, 0, 2.2, 1.6);
     this.light.position.set(0, 0.5, 0);
@@ -71,6 +105,7 @@ class ArcadeButton {
     this.cap.position.y = CAP_TOP - 0.181 - TRAVEL * this.depth;
     this.capMat.emissiveIntensity = 0.25 + 2.4 * this.depth;
     this.ring.emissiveIntensity = 0.15 + 1.5 * this.depth;
+    this.arrowMat.emissiveIntensity = 0.25 + 0.9 * this.depth;
     this.light.intensity = 3.5 * this.depth;
   }
 
@@ -125,15 +160,15 @@ export class ArcadeScene {
     this.renderer.toneMappingExposure = 1.05;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
     this.scene.background = backdropTexture();
     this.scene.fog = new THREE.Fog("#070913", 9, 20);
 
     this.camera = new THREE.PerspectiveCamera(34, 1, 0.05, 60);
-    this.camera.position.set(2.2, 2.55, 4.6);
+    this.camera.position.set(-0.85, 4.45, 3.85);
     this.controls = new OrbitControls(this.camera, canvas);
-    this.controls.target.set(0, 1.05, -1.0);
+    this.controls.target.set(0.12, 0.62, -0.95);
     this.controls.enableDamping = true;
     this.controls.enablePan = false;
     this.controls.minDistance = 2.2;
@@ -203,6 +238,7 @@ export class ArcadeScene {
     this.screenTex = new THREE.CanvasTexture(gameCanvas);
     this.screenTex.colorSpace = THREE.SRGBColorSpace;
     this.screenTex.minFilter = THREE.LinearFilter;
+    this.screenTex.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
     this.screen = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1),
       new THREE.MeshBasicMaterial({ map: this.screenTex, toneMapped: false }),

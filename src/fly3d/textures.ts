@@ -144,33 +144,6 @@ export function wingTexture(): THREE.Texture {
   return t;
 }
 
-/** Arrow label for the top of an arcade button. */
-export function arrowTexture(dir: -1 | 1, color: string): THREE.Texture {
-  const [c, g] = canvas(256, 256);
-  const grad = g.createRadialGradient(110, 100, 10, 128, 128, 128);
-  grad.addColorStop(0, "#ffffff");
-  grad.addColorStop(0.2, color);
-  grad.addColorStop(1, color);
-  g.fillStyle = grad;
-  g.fillRect(0, 0, 256, 256);
-  g.fillStyle = "rgba(255,255,255,0.92)";
-  g.beginPath();
-  if (dir < 0) {
-    g.moveTo(70, 128);
-    g.lineTo(165, 70);
-    g.lineTo(165, 186);
-  } else {
-    g.moveTo(186, 128);
-    g.lineTo(91, 70);
-    g.lineTo(91, 186);
-  }
-  g.closePath();
-  g.fill();
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
 /** Soft radial gradient used for the backdrop. */
 export function backdropTexture(): THREE.Texture {
   const [c, g] = canvas(512, 512);

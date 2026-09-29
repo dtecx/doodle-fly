@@ -304,7 +304,7 @@ export class FlyModel {
     for (const side of [-1, 1] as const) {
       const s = side;
       const defs: LegDef[] = [
-        { hip: v(0.12 * s, 0.72, -0.3), coxaDir: v(0.3 * s, -1, -0.35).normalize(), lens: [0.2, 0.55, 0.52, 0.4], foot: v(0.4 * s, 0, -0.95), tarsusDir: v(0.2 * s, -0.25, -1).normalize(), side: s, front: true },
+        { hip: v(0.12 * s, 0.72, -0.3), coxaDir: v(0.3 * s, -1, -0.35).normalize(), lens: [0.2, 0.62, 0.6, 0.42], foot: v(0.45 * s, 0, -0.95), tarsusDir: v(0.2 * s, -0.25, -1).normalize(), side: s, front: true },
         { hip: v(0.17 * s, 0.7, -0.03), coxaDir: v(0.6 * s, -1, 0).normalize(), lens: [0.17, 0.56, 0.62, 0.42], foot: v(0.95 * s, 0, -0.18), tarsusDir: v(s, -0.25, -0.15).normalize(), side: s, front: false },
         { hip: v(0.16 * s, 0.72, 0.2), coxaDir: v(0.5 * s, -1, 0.35).normalize(), lens: [0.18, 0.62, 0.66, 0.46], foot: v(0.78 * s, 0, 0.78), tarsusDir: v(0.55 * s, -0.25, 1).normalize(), side: s, front: false },
       ];

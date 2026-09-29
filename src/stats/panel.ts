@@ -159,8 +159,8 @@ export class StatsPanel {
 
     const c = info.calibration;
     this.el.dataset.textContent =
-      `${info.dataset} · ${fmt(info.neurons)} neurons · ${fmt(info.connections)} connections · ` +
-      `${(info.synapses / 1e6).toFixed(1)}M synapses · LIF model (Shiu et al. 2024), dt ${info.dt} ms`;
+      `${info.dataset} · ${fmt(info.neurons)} neurons · ${(info.connections / 1e6).toFixed(1)}M connections · ` +
+      `${(info.synapses / 1e6).toFixed(1)}M synapses · Shiu et al. 2024 LIF · dt ${info.dt} ms`;
     this.el.calib.textContent = `L ${fmt(c.respL)} / R ${fmt(c.respR)} sp/s at ${c.hz} Hz → R ×${c.gainR.toFixed(2)}`;
   }
 
@@ -300,7 +300,9 @@ export class StatsPanel {
     ctx.clearRect(0, 0, w, h);
     if (!this.trace.length) return;
     const now = this.simNow;
-    const mid = h * 0.5;
+    const top = 16;
+    const plotH = h - top - 2;
+    const mid = top + plotH / 2;
     ctx.strokeStyle = "rgba(255,255,255,0.08)";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -321,26 +323,27 @@ export class StatsPanel {
       });
       ctx.stroke();
     };
-    line((p) => h - 2 - (p.l / maxRate) * (h - 6), "rgba(77,171,247,0.8)", 1.3);
-    line((p) => h - 2 - (p.r / maxRate) * (h - 6), "rgba(255,146,43,0.8)", 1.3);
-    line((p) => mid - Math.max(-1.4, Math.min(1.4, p.steer)) * (h * 0.33), "#f8f9fa", 1.8);
+    line((p) => h - 2 - (p.l / maxRate) * plotH, "rgba(77,171,247,0.8)", 1.3);
+    line((p) => h - 2 - (p.r / maxRate) * plotH, "rgba(255,146,43,0.8)", 1.3);
+    line((p) => mid - (Math.max(-1.4, Math.min(1.4, p.steer)) / 1.4) * (plotH / 2), "#f8f9fa", 1.8);
     ctx.font = "10px 'JetBrains Mono', monospace";
     ctx.textBaseline = "top";
     ctx.textAlign = "left";
     ctx.fillStyle = "#4dabf7";
-    ctx.fillText("steer DN L, sp/s", 6, 4);
+    ctx.fillText("steer DN L, sp/s", 6, 3);
     ctx.fillStyle = "#ff922b";
-    ctx.fillText("steer DN R, sp/s", 124, 4);
+    ctx.fillText("steer DN R, sp/s", 124, 3);
     ctx.fillStyle = "#f8f9fa";
-    ctx.fillText("steering = R − L", 242, 4);
+    ctx.fillText("steering = R − L", 242, 3);
     ctx.fillStyle = "rgba(255,255,255,0.35)";
     ctx.textAlign = "right";
-    ctx.fillText(`${TRACE_WINDOW / 1000} s`, w - 4, 4);
+    ctx.fillText(`last ${TRACE_WINDOW / 1000} s`, w - 4, 3);
   }
 
   private bar(label: string, value: number, max: number, color: string, unit = "Hz", title = ""): string {
     const pct = Math.max(0, Math.min(100, (value / max) * 100));
-    return `<div class="meter" title="${title}"><span class="m-label">${label}</span><span class="m-track"><span class="m-fill" style="width:${pct.toFixed(1)}%;background:${color}"></span></span><span class="m-val">${value >= 10 ? Math.round(value) : value.toFixed(1)} ${unit}</span></div>`;
+    const v = value >= 10 ? Math.round(value) : value.toFixed(1);
+    return `<div class="meter" title="${title}"><span class="m-label"><span>${label}</span><b>${v} ${unit}</b></span><span class="m-track"><span class="m-fill" style="width:${pct.toFixed(1)}%;background:${color}"></span></span></div>`;
   }
 
   private pair(label: string, l: number, r: number, max: number, cl: string, cr: string, unit = "Hz", title = ""): string {
@@ -386,9 +389,11 @@ export class StatsPanel {
       this.pair("DNa02", g.DNa02_L ?? 0, g.DNa02_R ?? 0, 150, "#4dabf7", "#ff922b", "Hz", "Known steering neuron (Rayshubskiy et al. 2020)"),
       this.pair("steer DN Σ", d.rateL, d.rateR, 500, "#4dabf7", "#ff922b", "sp/s", STEER_TYPES.join(", ")),
       `<div class="stage">body · output</div>`,
+      `<div class="outputs">`,
       this.bar("DNp01 escape", gf, 250, "#ff6b81", "Hz", "Giant fibre: responds to looming (the fly is falling)"),
       this.bar("sugar GRN", sugar, 160, "#faa2c1", "Hz", "Sugar-sensing gustatory neurons (driven when the fly eats a sugar cube)"),
       this.bar("proboscis MN", g.proboscis_MN ?? 0, 40, "#f06595", "Hz", "Proboscis motor neurons (24 cells)"),
+      `</div>`,
     ].join("");
 
     // super-class activity (log bars)
