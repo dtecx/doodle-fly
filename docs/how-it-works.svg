@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 200" width="900" height="200" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <style>
+    .label { fill: #768390; font-size: 15px; font-weight: 600; }
+    .note { fill: #768390; font-size: 12.5px; }
+    .line { stroke: #768390; stroke-width: 1.5; fill: none; }
+    .dot { fill: #768390; }
+    .ring { fill: none; stroke: #768390; stroke-width: 1.5; }
+    .brain { fill: #f0883e; }
+  </style>
+
+  <!-- stations: hollow = hand-made interface, filled = real neurons -->
+  <path class="line" d="M69 70 H241 M259 70 H441 M459 70 H641 M659 70 H831"/>
+  <path class="line" d="M150 65 l6 5 l-6 5 M345 65 l6 5 l-6 5 M545 65 l6 5 l-6 5 M740 65 l6 5 l-6 5"/>
+  <circle class="ring" cx="60" cy="70" r="7"/>
+  <circle class="ring" cx="250" cy="70" r="7"/>
+  <circle class="brain" cx="450" cy="70" r="8"/>
+  <circle class="dot" cx="650" cy="70" r="7"/>
+  <circle class="ring" cx="840" cy="70" r="7"/>
+
+  <g text-anchor="middle">
+    <text class="label" x="60" y="44">game</text>
+    <text class="label" x="250" y="44">eyes</text>
+    <text class="label" x="450" y="44">brain</text>
+    <text class="label" x="650" y="44">steering neurons</text>
+    <text class="label" x="840" y="44">buttons</text>
+
+    <text class="note" x="60" y="100">target platform</text>
+    <text class="note" x="250" y="100">LC10a, left or right</text>
+    <text class="note" x="250" y="117">Poisson drive</text>
+    <text class="note" x="450" y="100">138,639 LIF neurons</text>
+    <text class="note" x="450" y="117">15.1M connections</text>
+    <text class="note" x="650" y="100">DNa02 + 5 more types</text>
+    <text class="note" x="650" y="117">right − left</text>
+    <text class="note" x="840" y="100">◀  ▶</text>
+  </g>
+
+  <!-- the loop closes through the game -->
+  <path class="line" stroke-dasharray="3 4" d="M840 128 V156 H500 M400 156 H60 V132"/>
+  <path class="line" d="M55 138 l5 -6 l5 6"/>
+  <text class="note" x="450" y="160" text-anchor="middle">moves the fly</text>
+
+  <g class="note" font-size="11.5">
+    <circle class="ring" cx="636" cy="190" r="4"/>
+    <text x="645" y="194">hand-made</text>
+    <circle class="dot" cx="726" cy="190" r="4"/>
+    <text x="735" y="194">connectome</text>
+  </g>
+</svg>
