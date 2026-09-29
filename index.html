@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Doodle Fly — a fruit-fly brain plays a jumping game</title>
+    <meta
+      name="description"
+      content="A Doodle-Jump-style game played by a whole-brain model of the fruit fly: the FlyWire v783 connectome, 138,639 spiking neurons, running live in your browser."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='26' cy='36' rx='16' ry='12' fill='%23d9a54c' stroke='%232a1c0f' stroke-width='3'/%3E%3Ccircle cx='44' cy='30' r='12' fill='%23d8322a' stroke='%232a1c0f' stroke-width='3'/%3E%3Cellipse cx='22' cy='20' rx='14' ry='6' fill='%23eaf6ff' stroke='%233f5c78' stroke-width='2' transform='rotate(-20 22 20)'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@400;600;700;800&family=Pangolin&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <main id="app">
+      <section id="game-pane" aria-label="Game">
+        <canvas id="game"></canvas>
+      </section>
+
+      <section id="right">
+        <div id="arcade-pane">
+          <canvas id="arcade" aria-label="3D fly at an arcade cabinet"></canvas>
+          <div class="tag">
+            <b>3D</b> the fly presses the buttons its descending neurons pick
+            <span class="hint">drag to orbit</span>
+          </div>
+        </div>
+
+        <div id="stats">
+          <header>
+            <div class="title">
+              <b>FLY BRAIN</b>
+              <span id="dataset">—</span>
+            </div>
+            <div class="toggles">
+              <button data-opt="showTarget" title="Show the platform the eyes are locked on (T)">target</button>
+              <button data-opt="swapEyes" title="Control: wire the left eye to the right LC10a and vice versa (S)">swap eyes</button>
+              <button data-opt="blind" title="Control: no drive to LC10a at all (B)">blind</button>
+              <button id="speed-btn" title="Speed (F)">×1</button>
+              <button id="pause-btn" title="Pause (space)">❚❚ pause</button>
+            </div>
+          </header>
+
+          <div class="grid">
+            <div class="card map">
+              <canvas id="brainmap"></canvas>
+              <div class="card-title">whole brain · flash = spike</div>
+              <div class="map-lr"><span>L</span><span>view from behind</span><span>R</span></div>
+              <div class="legend">
+                <span><i style="background: #5ee7ff"></i>LC10a</span>
+                <span><i style="background: #ff9d26"></i>DN · AOTU</span>
+                <span><i style="background: #ff5a73"></i>escape · taste</span>
+              </div>
+            </div>
+
+            <div class="card pipe">
+              <div class="card-title">
+                eyes → brain → buttons
+                <span id="steer-value">straight</span>
+              </div>
+              <div id="pipeline"></div>
+            </div>
+
+            <div class="card raster">
+              <div class="card-title">spikes of identified neurons</div>
+              <canvas id="raster"></canvas>
+            </div>
+
+            <div class="card traces">
+              <canvas id="traces"></canvas>
+            </div>
+
+            <div class="card nums">
+              <div class="num"><span>brain time</span><b id="sim-time">0:00.0</b></div>
+              <div class="num"><span>game speed</span><b id="speed">×1.00</b></div>
+              <div class="num"><span>sim headroom</span><b id="headroom">—</b></div>
+              <div class="num"><span>spikes/s · whole brain</span><b id="brain-rate">0</b></div>
+              <div class="num"><span>neurons active in 1 s</span><b id="active-1s">0</b></div>
+              <div class="num"><span>integrated every step</span><b id="hot">0</b></div>
+              <div class="num"><span>total spikes</span><b id="total">0</b></div>
+              <div class="num"><span>fired at least once</span><b id="ever">0</b></div>
+              <div class="num wide"><span>steering DN calibration</span><b id="calib">—</b></div>
+            </div>
+
+            <div class="card classes">
+              <div class="card-title">activity by super-class · spikes/s</div>
+              <div id="classes"></div>
+            </div>
+
+            <div class="card types">
+              <div class="card-title">most active cell types</div>
+              <div id="types"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="loader">
+      <div class="box">
+        <div class="l-title">Loading a fly brain</div>
+        <div class="l-sub">FlyWire v783 · 138,639 neurons · 15M connections · ~34 MB</div>
+        <div class="l-track"><div id="loader-bar"></div></div>
+        <div id="loader-stage">…</div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
