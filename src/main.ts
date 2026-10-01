@@ -7,7 +7,8 @@ import { ArcadeScene } from "./fly3d/scene.ts";
 import { DoodleGame, VIEW_H } from "./game/game.ts";
 import { GameRenderer } from "./game/render.ts";
 import { BrainMap } from "./stats/brainmap.ts";
-import { StatsPanel } from "./stats/panel.ts";
+import { PathwayView } from "./ui/pathway.ts";
+import { SpikesView } from "./ui/spikes.ts";
 
 /** one brain step = one game frame of simulated time */
 const FRAME_MS = 1000 / 60;
@@ -19,13 +20,13 @@ const BEST_KEY = "doodle-fly:best";
 const PRESS_ON = 0.18;
 const PRESS_OFF = 0.08;
 
+type Toggle = "showTarget" | "swapEyes" | "blind";
+
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
 const gameCanvas = $<HTMLCanvasElement>("game");
 const screenCanvas = document.createElement("canvas");
 const loader = $("loader");
-const loaderBar = $("loader-bar");
-const loaderStage = $("loader-stage");
 
 const opts = { showTarget: true, swapEyes: false, blind: false, speed: 1, paused: false };
 
@@ -36,7 +37,8 @@ const decoder = new SteeringDecoder();
 const sfx = new Sfx();
 let arcade: ArcadeScene;
 let brainMap: BrainMap;
-let stats: StatsPanel;
+let pathway: PathwayView;
+let spikes: SpikesView;
 let info: ReadyInfo;
 
 let budget = 0;
@@ -52,6 +54,7 @@ let simTotal = 0;
 /** brain clock of the latest frame (includes the start-up calibration) */
 let brainNow = 0;
 let gameSpeed = 1;
+let factsAt = 0;
 
 try {
   game.best = Number(localStorage.getItem(BEST_KEY)) || 0;
@@ -83,6 +86,7 @@ function onFrame(frame: FrameResult): void {
     r += counts[`${t}_R`];
   }
   const steer = decoder.update(l, r, frame.frameMs, info.calibration);
+  const dx = game.fly.alive && game.sense.target ? game.sense.dx : null;
   game.step(frame.frameMs / 1000, steer);
   sugarLeft = Math.max(0, sugarLeft - frame.frameMs);
   const pan = (game.fly.x / game.W) * 1.2 - 0.6;
@@ -124,11 +128,18 @@ function onFrame(frame: FrameResult): void {
   simTotal += frame.frameMs;
   brainNow = frame.simMs;
   brainMap.addSpikes(frame.spikes, frame.spikeT, frame.simMs - frame.frameMs);
-  stats.onFrame(
-    frame,
-    { input: lastInput, steer, rateL: decoder.rateL, rateR: decoder.rateR, gameSpeed, paused: opts.paused },
+  spikes.onFrame(frame, { steer, rateL: decoder.rateL, rateR: decoder.rateR, gameSpeed, paused: opts.paused });
+  pathway.onFrame({
+    input: lastInput,
     counts,
-  );
+    frameMs: frame.frameMs,
+    steer,
+    rateL: decoder.rateL,
+    rateR: decoder.rateR,
+    dx,
+    swapEyes: opts.swapEyes,
+    blind: opts.blind,
+  });
   if (!opts.paused && budget >= FRAME_MS) sendStep();
 }
 
@@ -152,7 +163,16 @@ function tick(now: number): void {
   arcade.render(realDt / 1000, { steer: decoder.steer, proboscis, startle, buzz, bounce });
   bounce = false;
   brainMap.render(brainNow);
-  stats.render();
+  pathway.draw(now);
+  spikes.render();
+  if (now - factsAt > 250) {
+    factsAt = now;
+    $("facts").innerHTML = spikes.facts();
+    const st = $("steer-value");
+    const s = decoder.steer;
+    st.textContent = s < -0.1 ? `◀ left ${s.toFixed(2)}` : s > 0.1 ? `right ▶ +${s.toFixed(2)}` : "straight";
+    st.className = `steer ${s < -0.1 ? "left" : s > 0.1 ? "right" : ""}`;
+  }
   requestAnimationFrame(tick);
 }
 
@@ -165,27 +185,34 @@ function resize(): void {
   arcade?.setScreenAspect(aspect);
   arcade?.resize();
   brainMap?.resize();
-  stats?.resize();
+  pathway?.resize();
+  spikes?.resize();
 }
 
 function bindUi(): void {
-  const buttons = document.querySelectorAll<HTMLButtonElement>("[data-opt]");
+  const toggles = document.querySelectorAll<HTMLButtonElement>("[data-opt]");
+  const segs = [...document.querySelectorAll<HTMLButtonElement>(".seg button")];
+  const play = $("play");
   const mute = $("mute-btn");
   const hint = $("sound-hint");
   const sync = () => {
-    buttons.forEach((b) => b.classList.toggle("on", Boolean(opts[b.dataset.opt as "showTarget" | "swapEyes" | "blind"])));
-    $("speed-btn").textContent = `×${opts.speed}`;
-    $("pause-btn").textContent = opts.paused ? "▶ resume" : "❚❚ pause";
-    $("pause-btn").classList.toggle("on", opts.paused);
+    toggles.forEach((b) => b.setAttribute("aria-pressed", String(Boolean(opts[b.dataset.opt as Toggle]))));
+    segs.forEach((b) => b.setAttribute("aria-checked", String(Number(b.dataset.speed) === opts.speed)));
+    play.classList.toggle("paused", opts.paused);
+    play.setAttribute("aria-label", opts.paused ? "Play" : "Pause");
     mute.classList.toggle("muted", sfx.muted);
     mute.setAttribute("aria-pressed", String(sfx.muted));
     mute.title = sfx.muted ? "Sound off — click to unmute (M)" : "Sound on — click to mute (M)";
     hint.hidden = sfx.muted || sfx.unlocked;
   };
-  buttons.forEach((b) =>
+  const toggle = (key: Toggle) => {
+    opts[key] = !opts[key];
+    sync();
+  };
+  toggles.forEach((b) => b.addEventListener("click", () => toggle(b.dataset.opt as Toggle)));
+  segs.forEach((b) =>
     b.addEventListener("click", () => {
-      const key = b.dataset.opt as "showTarget" | "swapEyes" | "blind";
-      opts[key] = !opts[key];
+      opts.speed = Number(b.dataset.speed);
       sync();
     }),
   );
@@ -201,12 +228,16 @@ function bindUi(): void {
     sfx.setMuted(!sfx.muted);
     sync();
   };
-  $("speed-btn").addEventListener("click", cycleSpeed);
-  $("pause-btn").addEventListener("click", togglePause);
+  play.addEventListener("click", togglePause);
   mute.addEventListener("click", (e) => {
     e.stopPropagation();
     sfx.unlock();
     toggleMute();
+  });
+  const about = $<HTMLDialogElement>("about");
+  $("about-btn").addEventListener("click", () => about.showModal());
+  about.addEventListener("click", (e) => {
+    if (e.target === about) about.close();
   });
   // audio may only start from a user gesture
   const unlock = () => {
@@ -216,20 +247,14 @@ function bindUi(): void {
   window.addEventListener("pointerdown", unlock);
   window.addEventListener("keydown", (e) => {
     unlock();
-    if (e.target instanceof HTMLInputElement) return;
+    if (e.target instanceof HTMLInputElement || about.open) return;
     if (e.code === "Space") {
       e.preventDefault();
       togglePause();
-    } else if (e.code === "KeyS") {
-      opts.swapEyes = !opts.swapEyes;
-      sync();
-    } else if (e.code === "KeyB") {
-      opts.blind = !opts.blind;
-      sync();
-    } else if (e.code === "KeyT") {
-      opts.showTarget = !opts.showTarget;
-      sync();
-    } else if (e.code === "KeyF") cycleSpeed();
+    } else if (e.code === "KeyS") toggle("swapEyes");
+    else if (e.code === "KeyB") toggle("blind");
+    else if (e.code === "KeyT") toggle("showTarget");
+    else if (e.code === "KeyF") cycleSpeed();
     else if (e.code === "KeyM") toggleMute();
   });
   sync();
@@ -238,28 +263,34 @@ function bindUi(): void {
 async function main(): Promise<void> {
   resize();
   brain.onProgress = (stage, frac) => {
-    loaderStage.textContent = stage;
-    loaderBar.style.width = `${Math.round(frac * 100)}%`;
+    $("loader-stage").textContent = stage;
+    $("loader-bar").style.width = `${Math.round(frac * 100)}%`;
   };
   brain.onError = (msg) => {
-    loaderStage.textContent = `Error: ${msg}`;
+    $("loader-stage").textContent = `Error: ${msg}`;
     loader.classList.add("error");
   };
   brain.onFrame = onFrame;
   // the worker resolves URLs against its own script, so hand it an absolute base
   info = await brain.init(new URL(import.meta.env.BASE_URL, location.href).href);
   await Promise.race([
-    Promise.all([document.fonts.load("40px Pangolin"), document.fonts.load('12px "JetBrains Mono"')]),
-    new Promise((r) => setTimeout(r, 1500)),
+    Promise.all([
+      document.fonts.load("40px Pangolin"),
+      document.fonts.load('italic 500 40px "Newsreader"'),
+      document.fonts.load('600 13px "IBM Plex Sans"'),
+      document.fonts.load('500 12px "IBM Plex Mono"'),
+    ]),
+    new Promise((r) => setTimeout(r, 2000)),
   ]);
   arcade = new ArcadeScene($<HTMLCanvasElement>("arcade"), screenCanvas);
   brainMap = new BrainMap($<HTMLCanvasElement>("brainmap"), info);
-  stats = new StatsPanel(info);
+  pathway = new PathwayView($<HTMLCanvasElement>("pathway"), info);
+  spikes = new SpikesView(info);
   bindUi();
   resize();
   window.addEventListener("resize", resize);
   loader.classList.add("done");
-  if (import.meta.env.DEV) Object.assign(window, { __doodle: { game, brainMap, arcade, stats, info, opts, decoder, sfx } });
+  if (import.meta.env.DEV) Object.assign(window, { __doodle: { game, brainMap, arcade, spikes, pathway, info, opts, decoder, sfx } });
   lastNow = performance.now();
   requestAnimationFrame(tick);
 }

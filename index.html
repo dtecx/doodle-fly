@@ -3,119 +3,114 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Doodle Fly — a fruit-fly brain plays a jumping game</title>
+    <title>Doodle Fly — a fruit fly's whole brain plays a jumping game</title>
     <meta
       name="description"
       content="A Doodle-Jump-style game played by a whole-brain model of the fruit fly: the FlyWire v783 connectome, 138,639 spiking neurons, running live in your browser."
     />
+    <meta name="theme-color" content="#f3eee4" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='26' cy='36' rx='16' ry='12' fill='%23d9a54c' stroke='%232a1c0f' stroke-width='3'/%3E%3Ccircle cx='44' cy='30' r='12' fill='%23d8322a' stroke='%232a1c0f' stroke-width='3'/%3E%3Cellipse cx='22' cy='20' rx='14' ry='6' fill='%23eaf6ff' stroke='%233f5c78' stroke-width='2' transform='rotate(-20 22 20)'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@400;600;700;800&family=Pangolin&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Pangolin&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
-    <main id="app">
-      <section id="game-pane" aria-label="Game">
-        <canvas id="game"></canvas>
-        <button id="mute-btn" class="mute" type="button" aria-label="Toggle sound" aria-pressed="false">
-          <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" />
-            <path class="wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
-          </svg>
-          <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" />
-            <path class="wave" d="M16 9.5l5 5M21 9.5l-5 5" />
-          </svg>
-        </button>
-        <div id="sound-hint" hidden>click anywhere for sound</div>
-      </section>
+    <div id="app">
+      <header class="masthead">
+        <div class="brand">
+          <h1>Doodle Fly</h1>
+          <p class="dek">A fruit fly’s whole brain plays a jumping game</p>
+        </div>
+        <nav class="controls" aria-label="Controls">
+          <button id="play" class="icon-btn" type="button" aria-label="Pause" title="Pause (space)">
+            <svg class="i-pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="2.5" width="3" height="11" rx="1" /><rect x="9.5" y="2.5" width="3" height="11" rx="1" /></svg>
+            <svg class="i-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4a.6.6 0 0 0 .9.5l8.2-5.2a.6.6 0 0 0 0-1L5.4 2.3a.6.6 0 0 0-.9.5z" /></svg>
+          </button>
+          <div class="seg" role="radiogroup" aria-label="Speed" title="Speed (F)">
+            <button type="button" role="radio" data-speed="1">1×</button>
+            <button type="button" role="radio" data-speed="2">2×</button>
+            <button type="button" role="radio" data-speed="4">4×</button>
+          </div>
+          <span class="divider" aria-hidden="true"></span>
+          <button class="text-btn" type="button" data-opt="swapEyes" aria-pressed="false" title="Control: wire the left eye to the right LC10a and vice versa (S)">Swap eyes</button>
+          <button class="text-btn" type="button" data-opt="blind" aria-pressed="false" title="Control: no drive to LC10a at all (B)">Blind</button>
+          <button class="text-btn quiet-on" type="button" data-opt="showTarget" aria-pressed="true" title="Show the platform the eyes are locked on (T)">Target</button>
+          <button id="mute-btn" class="icon-btn ghost" type="button" aria-label="Sound" aria-pressed="false" title="Sound (M)">
+            <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" /><path class="wave" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /></svg>
+            <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z" /><path class="wave" d="M16 9.5l5 5M21 9.5l-5 5" /></svg>
+          </button>
+          <button id="about-btn" class="text-btn quiet" type="button">How it works</button>
+        </nav>
+      </header>
 
-      <section id="right">
-        <div id="arcade-pane">
+      <main class="figure">
+        <section class="panel game" aria-label="The game">
+          <canvas id="game"></canvas>
+          <div id="sound-hint" hidden>click anywhere for sound</div>
+        </section>
+
+        <section class="panel arcade" aria-labelledby="h-arcade">
+          <h2 id="h-arcade"><span class="fig">b</span>At the controls</h2>
+          <p class="sub">Its front legs press ◀ or ▶ when its steering neurons fire. Drag to look around.</p>
           <canvas id="arcade" aria-label="3D fly at an arcade cabinet"></canvas>
-          <div class="tag">
-            <b>3D</b> the fly presses the buttons its descending neurons pick
-            <span class="hint">drag to orbit</span>
-          </div>
-        </div>
+        </section>
 
-        <div id="stats">
-          <header>
-            <div class="title">
-              <b>FLY BRAIN</b>
-              <span id="dataset">—</span>
-            </div>
-            <div class="toggles">
-              <button data-opt="showTarget" title="Show the platform the eyes are locked on (T)">target</button>
-              <button data-opt="swapEyes" title="Control: wire the left eye to the right LC10a and vice versa (S)">swap eyes</button>
-              <button data-opt="blind" title="Control: no drive to LC10a at all (B)">blind</button>
-              <button id="speed-btn" title="Speed (F)">×1</button>
-              <button id="pause-btn" title="Pause (space)">❚❚ pause</button>
-            </div>
-          </header>
+        <section class="panel pathway" aria-labelledby="h-pathway">
+          <h2 id="h-pathway"><span class="fig">c</span>From the eyes to the buttons <span id="steer-value" class="steer">straight</span></h2>
+          <canvas id="pathway"></canvas>
+        </section>
 
-          <div class="grid">
-            <div class="card map">
-              <canvas id="brainmap"></canvas>
-              <div class="card-title">whole brain · flash = spike</div>
-              <div class="map-lr"><span>L</span><span>view from behind</span><span>R</span></div>
-              <div class="legend">
-                <span><i style="background: #5ee7ff"></i>LC10a</span>
-                <span><i style="background: #ff9d26"></i>DN · AOTU</span>
-                <span><i style="background: #ff5a73"></i>escape · taste</span>
-              </div>
-            </div>
+        <section class="panel spikes" aria-labelledby="h-spikes">
+          <h2 id="h-spikes"><span class="fig">d</span>Spikes of identified neurons</h2>
+          <canvas id="raster"></canvas>
+          <canvas id="traces"></canvas>
+        </section>
 
-            <div class="card pipe">
-              <div class="card-title">
-                eyes → brain → buttons
-                <span id="steer-value">straight</span>
-              </div>
-              <div id="pipeline"></div>
-            </div>
+        <section class="panel brain" aria-labelledby="h-brain">
+          <h2 id="h-brain"><span class="fig">e</span>The whole brain</h2>
+          <canvas id="brainmap"></canvas>
+          <p class="caption small">All 138,639 neurons at their real positions, seen from behind. A dot darkens when it spikes.</p>
+        </section>
+      </main>
 
-            <div class="card raster">
-              <div class="card-title">spikes of identified neurons</div>
-              <canvas id="raster"></canvas>
-            </div>
+      <footer class="facts" id="facts">&nbsp;</footer>
+    </div>
 
-            <div class="card traces">
-              <canvas id="traces"></canvas>
-            </div>
-
-            <div class="card nums">
-              <div class="num"><span>brain time</span><b id="sim-time">0:00.0</b></div>
-              <div class="num"><span>game speed</span><b id="speed">×1.00</b></div>
-              <div class="num"><span>sim headroom</span><b id="headroom">—</b></div>
-              <div class="num"><span>spikes/s · whole brain</span><b id="brain-rate">0</b></div>
-              <div class="num"><span>neurons active in 1 s</span><b id="active-1s">0</b></div>
-              <div class="num"><span>integrated every step</span><b id="hot">0</b></div>
-              <div class="num"><span>total spikes</span><b id="total">0</b></div>
-              <div class="num"><span>fired at least once</span><b id="ever">0</b></div>
-              <div class="num wide"><span>steering DN calibration</span><b id="calib">—</b></div>
-            </div>
-
-            <div class="card classes">
-              <div class="card-title">activity by super-class · spikes/s</div>
-              <div id="classes"></div>
-            </div>
-
-            <div class="card types">
-              <div class="card-title">most active cell types</div>
-              <div id="types"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+    <dialog id="about">
+      <form method="dialog"><button class="close" aria-label="Close">×</button></form>
+      <h2>How it works</h2>
+      <p>
+        Scientists sliced a fruit fly’s brain into 7,000 layers, imaged each one with an electron microscope and traced
+        every neuron and synapse. That wiring diagram, the FlyWire connectome, is public. Doodle Fly loads all of it into
+        your browser and simulates every neuron spike by spike, with the leaky integrate-and-fire model of Shiu et al.
+        (2024).
+      </p>
+      <p>
+        The game finds the platform the fly can still reach; its direction becomes input to the LC10a neurons on that
+        side, small-object detectors a fly uses to chase a target. The signal travels through the brain on its own. Six
+        types of descending neurons, the brain’s cables to the body, decide the move: more spikes on the right than on the
+        left means right. Nobody taught it: the left/right decision comes out of the wiring.
+      </p>
+      <table>
+        <thead><tr><th>Part</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Who connects to whom, synapse counts, sign</td><td>FlyWire v783, unchanged</td></tr>
+          <tr><td>Neuron dynamics and parameters</td><td>Shiu et al. 2024, unchanged</td></tr>
+          <tr><td>Target on the left → left descending neurons</td><td>emerges from the wiring</td></tr>
+          <tr><td>Sugar → proboscis, looming → giant fibre</td><td>emerges from the wiring</td></tr>
+          <tr><td>Which platform to aim for, input drive, spikes → buttons</td><td>hand-made interfaces</td></tr>
+        </tbody>
+      </table>
+      <p class="small">Connectome: Dorkenwald et al. 2024, Schlegel et al. 2024 (CC BY-NC 4.0). Brain model: Shiu et al. 2024. Code: MIT.</p>
+    </dialog>
 
     <div id="loader">
       <div class="box">
-        <div class="l-title">Loading a fly brain</div>
-        <div class="l-sub">FlyWire v783 · 138,639 neurons · 15M connections · ~34 MB</div>
+        <div class="l-title">Doodle Fly</div>
+        <div class="l-sub">Loading a whole fly brain · 138,639 neurons · ~34 MB</div>
         <div class="l-track"><div id="loader-bar"></div></div>
         <div id="loader-stage">…</div>
       </div>

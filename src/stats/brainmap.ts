@@ -1,4 +1,5 @@
-// Every neuron of the brain as a point; spikes flash and fade. Seen from behind, so the fly's left is on the left.
+// Every neuron of the brain as an ink dot on paper; a spike darkens it and, for the neurons the game talks to, flashes
+// their colour. Seen from behind, so the fly's left is on the left.
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { ReadyInfo } from "../brain/protocol.ts";
@@ -6,50 +7,32 @@ import type { ReadyInfo } from "../brain/protocol.ts";
 const VERT = /* glsl */ `
   attribute float spikeT;
   attribute float kind;
-  attribute vec3 baseColor;
   uniform float now;
   uniform float px;
-  varying vec3 vColor;
-  varying float vAlpha;
+  uniform float bgAlpha;
+  varying vec4 vColor;
   void main() {
-    float a = exp(-max(0.0, now - spikeT) / 150.0);
-    vec3 hot = kind > 2.5 ? vec3(1.0, 0.35, 0.45)
-             : kind > 1.5 ? vec3(1.0, 0.62, 0.15)
-             : kind > 0.5 ? vec3(0.35, 0.95, 1.0)
-             : vec3(1.0, 0.86, 0.55);
-    vColor = mix(baseColor, hot, a);
-    vAlpha = 0.3 + 0.7 * a;
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_Position = projectionMatrix * mv;
-    float big = kind > 0.5 ? 1.8 : 1.0;
-    gl_PointSize = px * (1.35 + a * 3.4 * big) * (kind > 1.5 ? 1.6 : 1.0);
+    float a = exp(-max(0.0, now - spikeT) / 160.0);
+    vec3 ink = vec3(0.11, 0.10, 0.09);
+    vec3 hot = kind > 2.5 ? vec3(0.77, 0.24, 0.17)
+             : kind > 1.5 ? vec3(0.78, 0.35, 0.12)
+             : kind > 0.5 ? vec3(0.18, 0.42, 0.64)
+             : ink;
+    float base = kind > 0.5 ? bgAlpha * 4.0 : bgAlpha;
+    vColor = vec4(mix(ink, hot, a), base + (0.92 - base) * a);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = px * (1.0 + a * 2.4 * (kind > 0.5 ? 1.5 : 1.0));
   }
 `;
 const FRAG = /* glsl */ `
-  varying vec3 vColor;
-  varying float vAlpha;
+  varying vec4 vColor;
   void main() {
     vec2 d = gl_PointCoord - 0.5;
     float r = dot(d, d);
     if (r > 0.25) discard;
-    float fall = smoothstep(0.25, 0.0, r);
-    gl_FragColor = vec4(vColor * fall, vAlpha * fall);
+    gl_FragColor = vec4(vColor.rgb, vColor.a * smoothstep(0.25, 0.1, r));
   }
 `;
-
-const CLASS_COLORS: Record<string, string> = {
-  optic: "#3a6c93",
-  central: "#6a52a0",
-  sensory: "#2f6448",
-  visual_projection: "#2d6a78",
-  visual_centrifugal: "#35577a",
-  ascending: "#6f6326",
-  descending: "#7a4a22",
-  sensory_ascending: "#58642b",
-  motor: "#7a2c34",
-  endocrine: "#6a3a5c",
-  unknown: "#3a3f4f",
-};
 
 export class BrainMap {
   readonly renderer: THREE.WebGLRenderer;
@@ -63,7 +46,8 @@ export class BrainMap {
   private t0 = performance.now();
 
   constructor(canvas: HTMLCanvasElement, info: ReadyInfo) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: true });
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: false });
+    this.renderer.setClearColor(0x000000, 0);
     this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     this.camera = new THREE.PerspectiveCamera(30, 1, 1, 10000);
     this.camera.position.set(0, 0, 2100);
@@ -94,15 +78,6 @@ export class BrainMap {
       pos[3 * i + 1] = -(src[3 * i + 1] - cy);
       pos[3 * i + 2] = -(src[3 * i + 2] - cz);
     }
-    const colors = new Float32Array(n * 3);
-    const tmp = new THREE.Color();
-    const classColor = info.superclasses.map((name) => new THREE.Color(CLASS_COLORS[name] ?? CLASS_COLORS.unknown));
-    for (let i = 0; i < n; i++) {
-      tmp.copy(classColor[info.superclass[i]]);
-      colors[3 * i] = tmp.r;
-      colors[3 * i + 1] = tmp.g;
-      colors[3 * i + 2] = tmp.b;
-    }
     const kind = new Float32Array(n);
     const mark = (ids: Int32Array, k: number) => ids.forEach((i) => (kind[i] = k));
     const g = info.groups;
@@ -118,7 +93,6 @@ export class BrainMap {
     this.spikeT = new Float32Array(n).fill(-1e9);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute("baseColor", new THREE.BufferAttribute(colors, 3));
     geo.setAttribute("kind", new THREE.BufferAttribute(kind, 1));
     this.attr = new THREE.BufferAttribute(this.spikeT, 1);
     this.attr.setUsage(THREE.DynamicDrawUsage);
@@ -126,11 +100,10 @@ export class BrainMap {
     this.material = new THREE.ShaderMaterial({
       vertexShader: VERT,
       fragmentShader: FRAG,
-      uniforms: { now: { value: 0 }, px: { value: 1 } },
+      uniforms: { now: { value: 0 }, px: { value: 1 }, bgAlpha: { value: 0.05 } },
       transparent: true,
       depthTest: false,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
     });
     this.points = new THREE.Points(geo, this.material);
     this.scene.add(this.points);
@@ -154,6 +127,8 @@ export class BrainMap {
     this.camera.position.setLength(Math.max(fitW, fitH));
     this.camera.updateProjectionMatrix();
     this.material.uniforms.px.value = Math.max(1, Math.min(2.2, h / 180)) * this.renderer.getPixelRatio();
+    // the same 138,639 dots on a smaller canvas pile up darker: thin them out
+    this.material.uniforms.bgAlpha.value = 0.045 * Math.max(0.3, Math.min(1.2, (w * h) / (520 * 380)));
   }
 
   render(simNow: number): void {

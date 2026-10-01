@@ -371,7 +371,7 @@ export class GameRenderer {
     ctx.fillText(String(game.score), 18, HUD_H / 2 + 2);
     ctx.textAlign = "right";
     ctx.font = `17px Pangolin, "Comic Sans MS", cursive`;
-    ctx.fillText(`best ${Math.max(game.best, game.score)}   ·   game #${game.games + 1}`, w - 64, HUD_H / 2 + 1);
+    ctx.fillText(`best ${Math.max(game.best, game.score)}   ·   game #${game.games + 1}`, w - 18, HUD_H / 2 + 1);
 
     if (this.paused) {
       ctx.fillStyle = "rgba(251, 246, 232, 0.55)";

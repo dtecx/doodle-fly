@@ -144,13 +144,13 @@ export function wingTexture(): THREE.Texture {
   return t;
 }
 
-/** Soft radial gradient used for the backdrop. */
+/** Soft paper-toned studio backdrop. */
 export function backdropTexture(): THREE.Texture {
   const [c, g] = canvas(512, 512);
-  const grad = g.createRadialGradient(256, 200, 20, 256, 256, 380);
-  grad.addColorStop(0, "#1d2440");
-  grad.addColorStop(0.6, "#0d1122");
-  grad.addColorStop(1, "#05070f");
+  const grad = g.createRadialGradient(256, 210, 30, 256, 256, 400);
+  grad.addColorStop(0, "#f8f4ec");
+  grad.addColorStop(0.65, "#efe8da");
+  grad.addColorStop(1, "#e2d9c6");
   g.fillStyle = grad;
   g.fillRect(0, 0, 512, 512);
   const t = new THREE.CanvasTexture(c);

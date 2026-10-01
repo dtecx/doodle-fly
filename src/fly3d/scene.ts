@@ -1,4 +1,5 @@
-// The fly at an arcade cabinet: its front legs press the ◀ ▶ buttons, the game runs on the screen.
+// The fly at an arcade cabinet, lit like a studio shot on paper: its front legs press the ◀ ▶ buttons, the game runs
+// on the screen.
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
@@ -68,11 +69,11 @@ class ArcadeButton {
     this.group.position.set(x, 0, BUTTON_Z);
     const base = new THREE.Mesh(
       new THREE.CylinderGeometry(0.36, 0.38, 0.08, 40),
-      new THREE.MeshStandardMaterial({ color: "#111320", roughness: 0.4, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({ color: "#2b2824", roughness: 0.55, metalness: 0.1 }),
     );
     base.position.y = 0.04;
     base.receiveShadow = true;
-    this.ring = new THREE.MeshStandardMaterial({ color: "#202438", emissive: new THREE.Color(color), emissiveIntensity: 0.15 });
+    this.ring = new THREE.MeshStandardMaterial({ color: "#3a3631", emissive: new THREE.Color(color), emissiveIntensity: 0.05 });
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.025, 10, 48), this.ring);
     ring.rotation.x = Math.PI / 2;
     ring.position.y = 0.085;
@@ -82,7 +83,7 @@ class ArcadeButton {
       roughness: 0.25,
       metalness: 0.05,
       emissive: new THREE.Color(color),
-      emissiveIntensity: 0.25,
+      emissiveIntensity: 0.12,
     });
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.28, 0.16, 40), this.capMat);
     body.position.y = 0.1;
@@ -103,10 +104,10 @@ class ArcadeButton {
   set(p: number): void {
     this.depth += (p - this.depth) * 0.35;
     this.cap.position.y = CAP_TOP - 0.181 - TRAVEL * this.depth;
-    this.capMat.emissiveIntensity = 0.25 + 2.4 * this.depth;
-    this.ring.emissiveIntensity = 0.15 + 1.5 * this.depth;
-    this.arrowMat.emissiveIntensity = 0.25 + 0.9 * this.depth;
-    this.light.intensity = 3.5 * this.depth;
+    this.capMat.emissiveIntensity = 0.12 + 0.9 * this.depth;
+    this.ring.emissiveIntensity = 0.05 + 0.8 * this.depth;
+    this.arrowMat.emissiveIntensity = 0.1 + 0.4 * this.depth;
+    this.light.intensity = 1.6 * this.depth;
   }
 
   get top(): THREE.Vector3 {
@@ -119,19 +120,13 @@ function marqueeTexture(): THREE.Texture {
   c.width = 1024;
   c.height = 160;
   const g = c.getContext("2d")!;
-  const grad = g.createLinearGradient(0, 0, 1024, 0);
-  grad.addColorStop(0, "#ff3d81");
-  grad.addColorStop(0.5, "#ffb13d");
-  grad.addColorStop(1, "#3dd6ff");
-  g.fillStyle = "#0b0d1a";
+  g.fillStyle = "#2b2824";
   g.fillRect(0, 0, 1024, 160);
-  g.font = "96px 'Pangolin', 'Comic Sans MS', cursive";
+  g.font = "italic 500 92px 'Newsreader', Georgia, serif";
   g.textAlign = "center";
   g.textBaseline = "middle";
-  g.shadowColor = "#ff9d3d";
-  g.shadowBlur = 24;
-  g.fillStyle = grad;
-  g.fillText("DOODLE FLY", 512, 84);
+  g.fillStyle = "#f3eee4";
+  g.fillText("Doodle Fly", 512, 86);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
@@ -157,13 +152,13 @@ export class ArcadeScene {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.0;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
     this.scene.background = backdropTexture();
-    this.scene.fog = new THREE.Fog("#070913", 9, 20);
+    this.scene.fog = new THREE.Fog("#ebe4d6", 10, 24);
 
     this.camera = new THREE.PerspectiveCamera(34, 1, 0.05, 60);
     this.camera.position.set(-0.85, 4.45, 3.85);
@@ -178,8 +173,8 @@ export class ArcadeScene {
     this.controls.update();
 
     // lights
-    this.scene.add(new THREE.HemisphereLight("#a9c1ff", "#1b1209", 0.55));
-    const key = new THREE.DirectionalLight("#fff0dc", 2.4);
+    this.scene.add(new THREE.HemisphereLight("#ffffff", "#cdbf9f", 1.25));
+    const key = new THREE.DirectionalLight("#fff4e6", 2.1);
     key.position.set(2.8, 5.5, 3.2);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
@@ -190,38 +185,20 @@ export class ArcadeScene {
     key.shadow.bias = -0.0004;
     key.shadow.normalBias = 0.02;
     this.scene.add(key);
-    const rim = new THREE.DirectionalLight("#7fb2ff", 1.3);
+    const rim = new THREE.DirectionalLight("#dfe8ff", 0.7);
     rim.position.set(-3, 2.5, 4);
     this.scene.add(rim);
 
     // console panel the fly stands on
     const panel = new THREE.Mesh(
       new RoundedBoxGeometry(3.6, 0.4, 2.9, 4, 0.08),
-      new THREE.MeshStandardMaterial({ color: "#1a1e36", roughness: 0.55, metalness: 0.25 }),
+      new THREE.MeshStandardMaterial({ color: "#dcd3c2", roughness: 0.85, metalness: 0 }),
     );
     panel.position.set(0, -0.2, -0.55);
     panel.receiveShadow = true;
     this.scene.add(panel);
-    for (const [x, color] of [
-      [-1.8, "#3dd6ff"],
-      [1.8, "#ff3d81"],
-    ] as const) {
-      const strip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.03, 0.03, 2.8),
-        new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 2 }),
-      );
-      strip.position.set(x, 0.0, -0.55);
-      this.scene.add(strip);
-    }
-    const front = new THREE.Mesh(
-      new THREE.BoxGeometry(3.5, 0.03, 0.03),
-      new THREE.MeshStandardMaterial({ color: "#ffb13d", emissive: "#ffb13d", emissiveIntensity: 1.6 }),
-    );
-    front.position.set(0, 0.0, 0.9);
-    this.scene.add(front);
-
-    this.left = new ArcadeButton(-BUTTON_X, -1, "#2ea8ff");
-    this.right = new ArcadeButton(BUTTON_X, 1, "#ff7a1a");
+    this.left = new ArcadeButton(-BUTTON_X, -1, "#2f6aa3");
+    this.right = new ArcadeButton(BUTTON_X, 1, "#c8581e");
     this.scene.add(this.left.group, this.right.group);
 
     // cabinet with the live game on its screen
@@ -230,7 +207,7 @@ export class ArcadeScene {
     cabinet.rotation.x = -0.1;
     const shell = new THREE.Mesh(
       new RoundedBoxGeometry(2.9, 3.4, 0.4, 4, 0.1),
-      new THREE.MeshStandardMaterial({ color: "#12152a", roughness: 0.5, metalness: 0.3 }),
+      new THREE.MeshStandardMaterial({ color: "#2b2824", roughness: 0.6, metalness: 0.08 }),
     );
     shell.position.y = 1.6;
     shell.castShadow = true;
@@ -251,7 +228,7 @@ export class ArcadeScene {
     marquee.position.set(0, 3.07, 0.205);
     cabinet.add(shell, this.screen, marquee);
     this.scene.add(cabinet);
-    this.screenLight = new THREE.PointLight("#bfe0ff", 5, 5.5, 1.4);
+    this.screenLight = new THREE.PointLight("#fff4e0", 1.6, 5.5, 1.4);
     this.screenLight.position.set(0, 1.6, -1.8);
     this.scene.add(this.screenLight);
 
