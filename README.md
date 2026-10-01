@@ -1,55 +1,67 @@
 <div align="center">
 
-# 🪰 Doodle Fly
+# Doodle Fly
 
-**A fruit fly's entire brain plays a Doodle-Jump-style game — live, in your browser.**
+**A fruit fly's entire brain plays a Doodle-Jump-style game, live in your browser.**
 
-138,639 spiking neurons · 15.1 million connections · zero training
+138,639 spiking neurons · 15.1 million connections · no training at all
 
-### [▶ Play it in your browser](https://dtecx.github.io/doodle-fly/)
+### [Play it in your browser →](https://dtecx.github.io/doodle-fly/)
 
 [![Deploy](https://github.com/dtecx/doodle-fly/actions/workflows/pages.yml/badge.svg)](https://github.com/dtecx/doodle-fly/actions/workflows/pages.yml)
 ![connectome](https://img.shields.io/badge/connectome-FlyWire%20v783-7dc242)
 ![model](https://img.shields.io/badge/model-LIF%20%C2%B7%20Shiu%20et%20al.%202024-8a63d2)
 ![license](https://img.shields.io/badge/code-MIT-blue)
 
-<img src="docs/demo.gif" width="100%" alt="The fly brain playing: the game on the left, the 3D fly pressing arcade buttons top right, live brain statistics bottom right">
+<img src="docs/demo.gif" width="100%" alt="The fly brain playing: the game on the left; the 3D fly pressing arcade buttons, the live steering pathway, a spike raster and the whole brain on the right">
 
 </div>
 
 Scientists sliced a fruit fly's brain into 7,000 layers, imaged each one with an electron microscope and traced every
-neuron and synapse. That wiring diagram — the [FlyWire](https://flywire.ai) connectome — is public.
+neuron and synapse. That wiring diagram, the [FlyWire](https://flywire.ai) connectome, is public.
 
 Doodle Fly loads the whole thing into your browser, simulates every neuron spike by spike, shows it the game and reads
 its moves out of the neurons that steer a real fly. Nobody taught it to play: the left/right decision comes out of the
 wiring.
 
+The sequel, [20fly8](https://github.com/dtecx/20fly8), gives the fly's mushroom body a game it has to *learn*: 2048.
+
 ## What you're looking at
 
 <table>
   <tr>
-    <td width="33%"><img src="docs/pane-game.png" alt="The game"></td>
-    <td width="33%"><img src="docs/pane-fly.png" alt="The 3D fly pressing the left button"></td>
-    <td width="33%"><img src="docs/pane-brain.png" alt="Live brain statistics"></td>
+    <td width="50%"><img src="docs/pane-fly.png" alt="The 3D fly pressing the right button"></td>
+    <td width="50%"><img src="docs/pane-pathway.png" alt="The steering pathway, live"></td>
   </tr>
   <tr>
-    <td valign="top"><b>The game.</b> A notebook-paper jumping game. The dashed ring is the platform the fly's eyes are
-    locked on. Green platforms hold, blue ones move, brown ones crumble, white ones vanish. Springs launch, sugar cubes
-    are a treat.</td>
-    <td valign="top"><b>The fly.</b> A 3D <i>Drosophila</i> at an arcade cabinet. Its front legs press ◀ / ▶ when its
-    steering neurons fire, the proboscis extends with its proboscis motor neurons, and it flinches when the giant fibre
-    fires. Drag to orbit.</td>
-    <td valign="top"><b>The brain.</b> Every neuron at its real position (flash = spike), the eyes → brain → buttons
-    pipeline, a spike raster of identified neurons, the steering signal and the most active cell types right now.</td>
+    <td valign="top"><b>b · At the controls.</b> A 3D <i>Drosophila</i> at an arcade cabinet with the game on its screen.
+    Its front legs press ◀ or ▶ when its steering neurons fire, the proboscis extends with its proboscis motor neurons,
+    and it flinches when the giant fibre fires. Drag to look around.</td>
+    <td valign="top"><b>c · From the eyes to the buttons.</b> The pathway it steers with, live: the target drives LC10a
+    in one eye, the signal runs through the optic tubercle (AOTU) to six types of descending neurons, and the stronger
+    side presses its button. Between them, the taste and escape circuits.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/pane-spikes.png" alt="Spike raster of identified neurons and the steering trace"></td>
+    <td width="50%"><img src="docs/pane-brain.png" alt="All 138,639 neurons as an ink stipple"></td>
+  </tr>
+  <tr>
+    <td valign="top"><b>d · Spikes of identified neurons.</b> A raster of the cells along the pathway, left side in blue,
+    right in orange, and the steering trace underneath: right minus left.</td>
+    <td valign="top"><b>e · The whole brain.</b> Every neuron at its real position, seen from behind. A dot darkens when
+    it spikes; the cells the game talks to flash their colour.</td>
   </tr>
 </table>
+
+The game itself (**a**) is drawn on notebook paper: green platforms hold, blue ones move, brown ones crumble, white
+ones vanish. Springs launch, sugar cubes are a treat. The dashed ring is the platform the fly's eyes are locked on.
 
 ## How it works
 
 <img src="docs/how-it-works.svg" width="100%" alt="game → eyes (LC10a) → brain (138,639 LIF neurons) → steering neurons → buttons → game">
 
 1. **Eyes.** The game finds the highest platform the fly can still reach. Its horizontal offset becomes 14–80 Hz
-   Poisson drive to the LC10a neurons on that side — small-object detectors, the cells a courting fly uses to chase a
+   Poisson drive to the LC10a neurons on that side: small-object detectors, the cells a courting fly uses to chase a
    moving target. Straight ahead drives nothing.
 2. **Brain.** All 138,639 neurons run as the leaky integrate-and-fire model of
    [Shiu et al., *Nature* 2024](https://www.nature.com/articles/s41586-024-07763-9) with its published parameters, at the
@@ -62,7 +74,7 @@ wiring.
 
 Two more circuits are live: a **sugar cube** drives the sugar-sensing taste neurons, which drive the proboscis motor
 neurons (the headline result of Shiu et al.), and **falling with nowhere to land** drives the looming detectors LPLC2 and
-LC4, which drive the giant fibre DNp01 — the escape neuron.
+LC4, which drive the giant fibre DNp01, the escape neuron.
 
 ## Is it really playing?
 
@@ -75,9 +87,9 @@ The same loop without graphics ([`scripts/play.ts`](scripts/play.ts)), 2 minutes
 | blind (no drive to LC10a) | 0, hops in place | ≈ 280 | 297 |
 
 Swap the eyes and the fly steers away from every platform; blind it and it hops on the spot. Both controls are buttons
-in the app (**swap eyes**, **blind**), so you can check it yourself.
+on the page (**Swap eyes**, **Blind**), so you can check it yourself.
 
-### What's real and what's engineered
+## What's real and what's engineered
 
 | part | status |
 |---|---|
@@ -123,7 +135,7 @@ npm run dev    # http://localhost:5173
 ```
 
 `npm run data` downloads ~135 MB once (cached in `~/.cache/doodle-fly`) and writes 34 MB to `public/data/brain/`.
-Click anywhere once to enable sound — browsers keep audio locked until you interact.
+Click anywhere once to enable sound; browsers keep audio locked until you interact.
 
 | key | action |
 |---|---|
@@ -158,7 +170,8 @@ src/brain/worker.ts     brain in a Web Worker + readout calibration
 src/control.ts          target -> LC10a, steering DNs -> buttons
 src/game/               game logic, paper renderer, hand-drawn fly
 src/fly3d/              3D fly with IK legs, arcade cabinet
-src/stats/              whole-brain spike map, statistics panel
+src/ui/                 the steering pathway, spike raster and traces
+src/stats/brainmap.ts   whole-brain spike map
 src/audio.ts            synthesized sound effects
 scripts/*.ts            headless experiments, screenshot capture
 ```
